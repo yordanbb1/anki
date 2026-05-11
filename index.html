@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>FlashDev</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c27;
+      --border: #2a2a3d;
+      --accent: #7c6aff;
+      --accent2: #ff6a6a;
+      --accent3: #6affa0;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+    .logo { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 6px 14px; border-radius: 99px; font-size: 0.8rem;
+      font-family: 'Space Mono', monospace; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.2s;
+      background: none; color: var(--muted);
+    }
+    .nav-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── SCREENS ── */
+    .screen { display: none; flex: 1; padding: 20px; flex-direction: column; gap: 20px; }
+    .screen.active { display: flex; }
+
+    /* ── REVIEW SCREEN ── */
+    .review-header { display: flex; justify-content: space-between; align-items: center; }
+    .review-count { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+    .category-badge {
+      font-family: 'Space Mono', monospace; font-size: 0.7rem;
+      padding: 3px 10px; border-radius: 99px;
+      background: var(--surface2); color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .card-wrap {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      perspective: 1000px;
+    }
+    .card {
+      width: 100%; max-width: 420px;
+      min-height: 280px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      cursor: pointer;
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      display: flex; flex-direction: column;
+      justify-content: center; gap: 16px;
+    }
+    .card-face.back { transform: rotateY(180deg); background: var(--surface2); }
+    .card-label {
+      font-family: 'Space Mono', monospace; font-size: 0.65rem;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 2px;
+    }
+    .card-text { font-size: 1.2rem; font-weight: 600; line-height: 1.5; }
+    .card-hint { font-size: 0.8rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+    .tap-hint {
+      text-align: center; font-family: 'Space Mono', monospace;
+      font-size: 0.72rem; color: var(--muted);
+    }
+
+    .answer-btns { display: flex; gap: 10px; }
+    .answer-btn {
+      flex: 1; padding: 14px 10px; border-radius: var(--radius);
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-family: 'Syne', sans-serif;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+    }
+    .answer-btn .emoji { font-size: 1.4rem; }
+    .answer-btn:hover { transform: translateY(-2px); }
+    .btn-hard:hover, .btn-hard:active { background: #3d1a1a; border-color: var(--accent2); color: var(--accent2); }
+    .btn-ok:hover, .btn-ok:active { background: #2a2a1a; border-color: #ffcc6a; color: #ffcc6a; }
+    .btn-easy:hover, .btn-easy:active { background: #1a3d2a; border-color: var(--accent3); color: var(--accent3); }
+
+    .progress-bar-wrap { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px; text-align: center;
+    }
+    .empty-icon { font-size: 3rem; }
+    .empty-title { font-size: 1.2rem; font-weight: 800; }
+    .empty-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── ADD SCREEN ── */
+    .section-title { font-size: 1.3rem; font-weight: 800; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    textarea, input, select {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text);
+      font-family: 'Syne', sans-serif; font-size: 1rem;
+      padding: 14px 16px; width: 100%; resize: none;
+      transition: border-color 0.2s; outline: none;
+      -webkit-appearance: none;
+    }
+    textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+    textarea { min-height: 100px; }
+    select option { background: var(--surface2); }
+
+    .btn-primary {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius);
+      padding: 16px; font-family: 'Syne', sans-serif;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: all 0.15s; width: 100%;
+    }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--accent3); color: #0a0a0f;
+      padding: 12px 24px; border-radius: 99px;
+      font-weight: 700; font-size: 0.85rem;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 999; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── DATA SCREEN ── */
+    .data-section { display: flex; flex-direction: column; gap: 12px; }
+    .data-title { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-family: 'Space Mono', monospace; }
+    .btn-secondary {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--radius);
+      padding: 14px 16px; font-family: 'Syne', sans-serif;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; width: 100%; text-align: left;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .btn-secondary:active { background: var(--surface2); }
+    .btn-danger {
+      background: var(--surface); border: 1px solid #3d1a1a;
+      color: var(--accent2);
+    }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 14px;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 0.75rem; color: var(--muted); font-family: 'Space Mono', monospace; margin-top: 4px; }
+
+    .category-list { display: flex; flex-direction: column; gap: 8px; }
+    .category-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .category-name { font-weight: 600; font-size: 0.9rem; }
+    .category-count { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Flash<span>Dev</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('review')">Преглед</button>
+    <button class="nav-tab" onclick="switchTab('add')">+ Карта</button>
+    <button class="nav-tab" onclick="switchTab('data')">Данни</button>
+  </div>
+</nav>
+
+<!-- REVIEW -->
+<div class="screen active" id="screen-review">
+  <div class="review-header">
+    <span class="review-count" id="review-count">0 карти за днес</span>
+    <span class="category-badge" id="review-category">–</span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+  </div>
+
+  <div id="review-content">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🎉</div>
+      <div class="empty-title">Всичко прегледано!</div>
+      <div class="empty-sub">Нямаш карти за днес.<br/>Добави нови или се върни утре.</div>
+    </div>
+
+    <div id="card-area" style="display:none; flex-direction:column; gap:16px; flex:1;">
+      <div class="card-wrap">
+        <div class="card" id="main-card" onclick="flipCard()">
+          <div class="card-face front">
+            <div class="card-label">Въпрос</div>
+            <div class="card-text" id="card-question">–</div>
+            <div class="card-hint">Натисни за отговор →</div>
+          </div>
+          <div class="card-face back">
+            <div class="card-label">Отговор</div>
+            <div class="card-text" id="card-answer">–</div>
+          </div>
+        </div>
+      </div>
+      <div class="tap-hint" id="tap-hint">👆 Натисни картата за да видиш отговора</div>
+      <div class="answer-btns" id="answer-btns" style="display:none;">
+        <button class="answer-btn btn-hard" onclick="rateCard(1)"><span class="emoji">😓</span>Трудно</button>
+        <button class="answer-btn btn-ok" onclick="rateCard(2)"><span class="emoji">😐</span>Окей</button>
+        <button class="answer-btn btn-easy" onclick="rateCard(3)"><span class="emoji">😊</span>Лесно</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD -->
+<div class="screen" id="screen-add">
+  <div class="section-title">Нова карта ✏️</div>
+  <div class="field-group">
+    <div class="field-label">Въпрос</div>
+    <textarea id="input-q" placeholder="Какво прави HashMap.get()?" rows="3"></textarea>
+  </div>
+  <div class="field-group">
+    <div class="field-label">Отговор</div>
+    <textarea id="input-a" placeholder="Търси по hash на ключа, O(1) средно..." rows="4"></textarea>
+  </div>
+  <div class="field-group">
+    <div class="field-label">Категория</div>
+    <select id="input-cat">
+      <option value="Java">Java</option>
+      <option value="DSA">DSA</option>
+      <option value="Spring">Spring</option>
+      <option value="Git">Git</option>
+      <option value="Kafka">Kafka</option>
+      <option value="System Design">System Design</option>
+      <option value="DevOps">DevOps</option>
+      <option value="SQL">SQL</option>
+      <option value="NoSQL / MongoDB">NoSQL / MongoDB</option>
+      <option value="Databases">Databases</option>
+      <option value="Общо">Общо</option>
+    </select>
+  </div>
+  <button class="btn-primary" onclick="addCard()">Добави карта 🚀</button>
+</div>
+
+<!-- DATA -->
+<div class="screen" id="screen-data">
+  <div class="section-title">Данни 💾</div>
+
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <div class="data-section">
+    <div class="data-title">По категории</div>
+    <div class="category-list" id="category-list"></div>
+  </div>
+
+  <div class="data-section">
+    <div class="data-title">Импорт / Експорт</div>
+    <button class="btn-secondary" onclick="exportData()">📤 Експортирай JSON</button>
+    <button class="btn-secondary" onclick="document.getElementById('file-input').click()">📥 Импортирай JSON</button>
+    <input type="file" id="file-input" accept=".json" onchange="importData(event)" />
+  </div>
+
+  <div class="data-section">
+    <div class="data-title">Опасна зона</div>
+    <button class="btn-secondary btn-danger" onclick="resetProgress()">🔄 Нулирай прогреса</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ──
+  let cards = [];
+  let reviewQueue = [];
+  let currentIndex = 0;
+  let sessionTotal = 0;
+  let isFlipped = false;
+
+  const STORAGE_KEY = 'flashdev_cards';
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      cards = raw ? JSON.parse(raw) : [];
+    } catch { cards = []; }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  }
+
+  // ── SPACED REPETITION ──
+  function getDueCards() {
+    const today = todayStr();
+    return cards.filter(c => !c.nextReview || c.nextReview <= today);
+  }
+
+  function todayStr() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function addDays(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().split('T')[0];
+  }
+
+  function getNextReview(card, rating) {
+    const level = card.level || 0;
+    if (rating === 1) return { level: Math.max(0, level - 1), next: addDays(1) };
+    if (rating === 2) {
+      const days = [1, 2, 4, 7, 14][Math.min(level, 4)];
+      return { level: level, next: addDays(days) };
+    }
+    // easy
+    const days = [2, 4, 7, 14, 30][Math.min(level, 4)];
+    return { level: Math.min(level + 1, 4), next: addDays(days) };
+  }
+
+  // ── REVIEW ──
+  function buildQueue() {
+    reviewQueue = [...getDueCards()].sort(() => Math.random() - 0.5);
+    currentIndex = 0;
+    sessionTotal = reviewQueue.length;
+  }
+
+  function showCurrentCard() {
+    const card = reviewQueue[currentIndex];
+    const emptyEl = document.getElementById('empty-state');
+    const cardArea = document.getElementById('card-area');
+
+    if (!card) {
+      emptyEl.style.display = 'flex';
+      cardArea.style.display = 'none';
+      document.getElementById('review-count').textContent = '0 карти за днес';
+      document.getElementById('review-category').textContent = '–';
+      updateProgress(1);
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    cardArea.style.display = 'flex';
+
+    document.getElementById('card-question').textContent = card.question;
+    document.getElementById('card-answer').textContent = card.answer;
+    document.getElementById('review-category').textContent = card.category || 'Общо';
+
+    const remaining = reviewQueue.length - currentIndex;
+    document.getElementById('review-count').textContent =
+      remaining + ' карт' + (remaining === 1 ? 'а' : 'и') + ' оставащи';
+
+    // reset flip
+    isFlipped = false;
+    document.getElementById('main-card').classList.remove('flipped');
+    document.getElementById('answer-btns').style.display = 'none';
+    document.getElementById('tap-hint').style.display = 'block';
+
+    const pct = sessionTotal > 0 ? ((sessionTotal - remaining) / sessionTotal) * 100 : 0;
+    updateProgress(pct);
+  }
+
+  function updateProgress(pct) {
+    document.getElementById('progress-bar').style.width = pct + '%';
+  }
+
+  function flipCard() {
+    if (isFlipped) return;
+    isFlipped = true;
+    document.getElementById('main-card').classList.add('flipped');
+    document.getElementById('answer-btns').style.display = 'flex';
+    document.getElementById('tap-hint').style.display = 'none';
+  }
+
+  function rateCard(rating) {
+    const card = reviewQueue[currentIndex];
+    if (!card) return;
+
+    const result = getNextReview(card, rating);
+    const idx = cards.findIndex(c => c.id === card.id);
+    if (idx !== -1) {
+      cards[idx].level = result.level;
+      cards[idx].nextReview = result.next;
+      cards[idx].reviewCount = (cards[idx].reviewCount || 0) + 1;
+    }
+    save();
+
+    currentIndex++;
+    setTimeout(showCurrentCard, 200);
+  }
+
+  // ── ADD ──
+  function addCard() {
+    const q = document.getElementById('input-q').value.trim();
+    const a = document.getElementById('input-a').value.trim();
+    const cat = document.getElementById('input-cat').value;
+
+    if (!q || !a) { showToast('⚠️ Попълни въпрос и отговор!'); return; }
+
+    const card = {
+      id: Date.now().toString(),
+      question: q,
+      answer: a,
+      category: cat,
+      level: 0,
+      nextReview: todayStr(),
+      reviewCount: 0,
+      createdAt: todayStr()
+    };
+
+    cards.push(card);
+    save();
+    buildQueue();
+
+    document.getElementById('input-q').value = '';
+    document.getElementById('input-a').value = '';
+    showToast('✅ Картата е добавена!');
+  }
+
+  // ── DATA ──
+  function renderStats() {
+    const total = cards.length;
+    const due = getDueCards().length;
+    const reviewed = cards.filter(c => c.reviewCount > 0).length;
+    const mastered = cards.filter(c => c.level >= 4).length;
+
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Общо карти</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent2)">${due}</div><div class="stat-label">За днес</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#ffcc6a">${reviewed}</div><div class="stat-label">Прегледани</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent3)">${mastered}</div><div class="stat-label">Овладени</div></div>
+    `;
+
+    const cats = {};
+    cards.forEach(c => { cats[c.category] = (cats[c.category] || 0) + 1; });
+    const catHtml = Object.entries(cats).sort((a,b) => b[1]-a[1]).map(([k,v]) => `
+      <div class="category-row">
+        <span class="category-name">${k}</span>
+        <span class="category-count">${v} карт${v === 1 ? 'а' : 'и'}</span>
+      </div>
+    `).join('');
+    document.getElementById('category-list').innerHTML = catHtml || '<div style="color:var(--muted);font-size:0.85rem;">Няма карти още.</div>';
+  }
+
+  function exportData() {
+    const json = JSON.stringify(cards, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'flashdev_backup_' + todayStr() + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📤 Файлът е изтеглен!');
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!Array.isArray(imported)) throw new Error();
+        // merge — avoid duplicates by id
+        const existingIds = new Set(cards.map(c => c.id));
+        const newCards = imported.filter(c => !existingIds.has(c.id));
+        cards = [...cards, ...newCards];
+        save();
+        buildQueue();
+        renderStats();
+        showToast(`✅ Добавени ${newCards.length} нови карти!`);
+      } catch {
+        showToast('❌ Невалиден файл!');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function resetProgress() {
+    if (!confirm('Сигурен ли си? Ще нулираш нивата на всички карти.')) return;
+    cards = cards.map(c => ({ ...c, level: 0, nextReview: todayStr(), reviewCount: 0 }));
+    save();
+    buildQueue();
+    showCurrentCard();
+    renderStats();
+    showToast('🔄 Прогресът е нулиран!');
+  }
+
+  // ── UI HELPERS ──
+  function switchTab(tab) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'data') renderStats();
+    if (tab === 'review') showCurrentCard();
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // ── INIT ──
+  load();
+  buildQueue();
+  showCurrentCard();
+</script>
+</body>
+</html>
