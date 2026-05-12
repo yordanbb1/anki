@@ -390,8 +390,16 @@
   }
 
   // ── REVIEW ──
+  function changeFilter() {
+    buildQueue();
+    showCurrentCard();
+  }
+
   function buildQueue() {
-    reviewQueue = [...getDueCards()].sort(() => Math.random() - 0.5);
+    const filter = document.getElementById('filter-cat');
+    const cat = filter ? filter.value : 'all';
+    const due = getDueCards().filter(c => cat === 'all' || c.category === cat);
+    reviewQueue = [...due].sort(() => Math.random() - 0.5);
     currentIndex = 0;
     sessionTotal = reviewQueue.length;
   }
