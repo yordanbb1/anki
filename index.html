@@ -235,6 +235,20 @@
     <span class="review-count" id="review-count">0 карти за днес</span>
     <span class="category-badge" id="review-category">–</span>
   </div>
+  <select id="filter-cat" onchange="changeFilter()" style="background:var(--surface);border:1px solid var(--border);border-radius:99px;color:var(--accent);font-family:'Space Mono',monospace;font-size:0.72rem;padding:4px 12px;outline:none;-webkit-appearance:none;">
+    <option value="all">Всички</option>
+    <option value="Java">Java</option>
+    <option value="DSA">DSA</option>
+    <option value="Spring">Spring</option>
+    <option value="Git">Git</option>
+    <option value="Kafka">Kafka</option>
+    <option value="System Design">System Design</option>
+    <option value="DevOps">DevOps</option>
+    <option value="SQL">SQL</option>
+    <option value="NoSQL / MongoDB">NoSQL / MongoDB</option>
+    <option value="Databases">Databases</option>
+    <option value="Общо">Общо</option>
+  </select>
   <div class="progress-bar-wrap">
     <div class="progress-bar" id="progress-bar" style="width:0%"></div>
   </div>
